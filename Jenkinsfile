@@ -13,5 +13,12 @@ pipeline {
                 sh 'python --version'
             }
         }
+        
+        stage('Build Image Water') {
+            steps {
+                echo 'Construction de l\'image Docker pour l\'application Water...'
+                sh 'docker build -t water:latest .'
+            }
+        }
     }
 }
