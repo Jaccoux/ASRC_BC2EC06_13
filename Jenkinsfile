@@ -28,5 +28,16 @@ pipeline {
                 sh 'docker push localhost:5000/water:latest'
             }
         }
+
+        stage('Deploy to Host') {
+            steps {
+                echo 'Déploiement de l\'application Water sur la machine hôte...'
+                // Supprimer l'ancien conteneur s'il existe pour éviter les conflits de nom
+                sh 'docker rm -f water-app-prod || true'
+                // Déployer le nouveau conteneur depuis le registre local sur le port 8082
+                sh 'docker run -d --name water-app-prod -p 8082:80 localhost:5000/water:latest'
+                echo 'Application déployée et accessible sur http://localhost:8082'
+            }
+        }
     }
 }
