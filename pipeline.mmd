@@ -1,0 +1,9 @@
+graph LR
+    A[Commit Git] --> B[Lint & Audit SonarQube]
+    B --> C[Tests Automatises Python]
+    C --> D[Docker Build Image]
+    D --> E[Push Registre Local :5000]
+    E --> F[Deploiement Securise sur l Hote]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#bbf,stroke:#333,stroke-width:2px
