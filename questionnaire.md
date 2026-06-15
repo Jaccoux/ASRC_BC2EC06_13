@@ -8,7 +8,7 @@ Dans le dépôt `fluffy-octo-sniffle`, la définition des pipelines CI/CD se tro
 ## 2. Schéma du pipeline CI/CD
 Voici le schéma conceptuel du pipeline mis en œuvre :
 ![Schéma Pipeline](pipeline.png)
-Le fichier source au format Mermaid (`pipeline.mermaid`) est disponible à la racine du projet.
+Le fichier source au format Mermaid (`pipeline.mmd`) est disponible à la racine du projet.
 
 ## 3. Reproduction de la pipeline avec Jenkins
 Oui, il est tout à fait possible de reproduire la logique de cette pipeline avec Jenkins en traduisant la syntaxe YAML de GitHub Actions en un script Groovy (`Jenkinsfile`). Cependant, plusieurs informations cruciales sont manquantes dans le dépôt d'origine :
@@ -43,6 +43,7 @@ Pour éviter d'exposer des données sensibles dans les variables d'environnement
 * L'utilisation native des **Docker Secrets** `secrets:` qui instancient des fichiers temporaires en mémoire `/run/secrets/` lisibles uniquement par le processus du conteneur.
 
 ## 10. Image Postgres personnalisée (Contrainte : 2 lignes)
+```dockerfile
 FROM postgres:latest
 ENV POSTGRES_PASSWORD=mypassword
 
