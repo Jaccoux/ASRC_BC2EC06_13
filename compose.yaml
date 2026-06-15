@@ -14,6 +14,14 @@ services:
     image: jenkins/agent
     container_name: jenkins_agent_1
     restart: on-failure
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apt-get update && apt-get install -y curl && curl -fsSL https://get.docker.com | sh
+        exec /usr/local/bin/jenkins-agent
     depends_on:
       - jenkinsadmin
 
@@ -21,6 +29,14 @@ services:
     image: jenkins/agent
     container_name: jenkins_agent_2
     restart: on-failure
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apt-get update && apt-get install -y curl && curl -fsSL https://get.docker.com | sh
+        exec /usr/local/bin/jenkins-agent
     depends_on:
       - jenkinsadmin
 
@@ -43,19 +59,54 @@ services:
         
         PASSWORD=$$(cat /var/jenkins_home/secrets/initialAdminPassword)
         
-        echo "Déclaration de jenkins_agent_1 via jenkins-cli..."
-        echo '<slave><name>jenkins_agent_1</name><remoteFS>/home/jenkins</remoteFS><numExecutors>1</numExecutors><mode>NORMAL</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$$Always"/><launcher class="hudson.slaves.JNLPLauncher"/></slave>' | java -Djava.net.useSystemProxies=false -jar jenkins-cli.jar -s http://jenkins_server:8080/ -auth admin:$$PASSWORD create-node jenkins_agent_1
+        echo "Déclaration de jenkins_agent_1..."
+        echo '<slave><name>jenkins_agent_1</name><remoteFS>/home/jenkins</remoteFS><numExecutors>1</numExecutors><mode>NORMAL</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$$Always"/><launcher class="hudson.slaves.JNLPLauncher"/></slave>' | java -jar jenkins-cli.jar -http -s http://jenkins_server:8080/ -auth admin:$$PASSWORD create-node jenkins_agent_1
         
-        echo "Déclaration de jenkins_agent_2 via jenkins-cli..."
-        echo '<slave><name>jenkins_agent_2</name><remoteFS>/home/jenkins</remoteFS><numExecutors>1</numExecutors><mode>NORMAL</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$$Always"/><launcher class="hudson.slaves.JNLPLauncher"/></slave>' | java -Djava.net.useSystemProxies=false -jar jenkins-cli.jar -s http://jenkins_server:8080/ -auth admin:$$PASSWORD create-node jenkins_agent_2
-        echo "Déclaration des agents terminée !"
+        echo "Déclaration de jenkins_agent_2..."
+        echo '<slave><name>jenkins_agent_2</name><remoteFS>/home/jenkins</remoteFS><numExecutors>1</numExecutors><mode>NORMAL</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$$Always"/><launcher class="hudson.slaves.JNLPLauncher"/></slave>' | java -jar jenkins-cli.jar -http -s http://jenkins_server:8080/ -auth admin:$$PASSWORD create-node jenkins_agent_2
+        
+        echo "Création de la définition du Job Pipeline..."
+        cat << 'EOF' > /tmp/job.xml
+        <flow-definition plugin="workflow-job">
+          <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+            <script>
+        pipeline {
+            agent any
+            stages {
+                stage('Lancement des Tests Applicatifs') {
+                    agent {
+                        docker { image 'python:3.10-slim' }
+                    }
+                    steps {
+                        sh 'python --version'
+                    }
+                }
+            }
+        }
+            </script>
+            <sandbox>true</sandbox>
+          </definition>
+        </flow-definition>
+        EOF
+        
+        echo "Injection du Job Pipeline dans Jenkins..."
+        java -jar jenkins-cli.jar -http -s http://jenkins_server:8080/ -auth admin:$$PASSWORD create-job pipeline-tests < /tmp/job.xml
+        echo "Configuration de l'Etape 5 terminée avec succès !"
 
   jenkinsagentssh:
     image: jenkins/ssh-agent
     container_name: jenkins_agent_ssh
     restart: on-failure
+    user: root
     environment:
       - JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH38hrWzSw5QuclgSm+nrWvEZzOlFUrRwBf9ctImXWTn jenkins
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apt-get update && apt-get install -y curl && curl -fsSL https://get.docker.com | sh
+        exec /usr/local/bin/setup-sshd
     depends_on:
       - jenkinsadmin
 
