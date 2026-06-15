@@ -24,5 +24,31 @@ services:
     depends_on:
       - jenkinsadmin
 
+  jenkins-cli-setup:
+    image: jenkins/jenkins:jdk21
+    container_name: jenkins_cli_setup
+    user: root
+    volumes:
+      - jenkins_data:/var/jenkins_home
+    depends_on:
+      - jenkinsadmin
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Attente de l'initialisation du serveur Jenkins..."
+        sleep 45
+        cd /tmp
+        echo "Téléchargement du binaire jenkins-cli.jar..."
+        curl -sS -o jenkins-cli.jar http://jenkins_server:8080/jnlpJars/jenkins-cli.jar
+        
+        PASSWORD=$$(cat /var/jenkins_home/secrets/initialAdminPassword)
+        
+        echo "Déclaration de jenkins_agent_1 via jenkins-cli..."
+        echo '<slave><name>jenkins_agent_1</name><remoteFS>/home/jenkins</remoteFS><numExecutors>1</numExecutors><mode>NORMAL</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$$Always"/><launcher class="hudson.slaves.JNLPLauncher"/></slave>' | java -jar jenkins-cli.jar -s http://jenkins_server:8080/ -auth admin:$$PASSWORD create-node jenkins_agent_1
+        
+        echo "Déclaration de jenkins_agent_2 via jenkins-cli..."
+        echo '<slave><name>jenkins_agent_2</name><remoteFS>/home/jenkins</remoteFS><numExecutors>1</numExecutors><mode>NORMAL</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$$Always"/><launcher class="hudson.slaves.JNLPLauncher"/></slave>' | java -jar jenkins-cli.jar -s http://jenkins_server:8080/ -auth admin:$$PASSWORD create-node jenkins_agent_2
+        echo "Déclaration des agents terminée !"
+
 volumes:
   jenkins_data:
