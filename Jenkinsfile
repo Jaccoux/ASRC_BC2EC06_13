@@ -20,5 +20,13 @@ pipeline {
                 sh 'docker build -t water:latest .'
             }
         }
+
+        stage('Push Image Registry') {
+            steps {
+                echo 'Dépôt de l\'image construite sur le registre local...'
+                sh 'docker tag water:latest localhost:5000/water:latest'
+                sh 'docker push localhost:5000/water:latest'
+            }
+        }
     }
 }
