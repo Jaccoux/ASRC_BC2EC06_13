@@ -45,8 +45,8 @@ Pour éviter d'exposer des données sensibles dans les variables d'environnement
 ## 10. Image Postgres personnalisée (Contrainte : 2 lignes)
 ```dockerfile
 FROM postgres:latest
-ENV POSTGRES_PASSWORD=mypassword```
-
+ENV POSTGRES_PASSWORD=mypassword
+```
 
 
 # Étape 9 : Étude des fonctionnalités de Rundeck et cas d'usage
